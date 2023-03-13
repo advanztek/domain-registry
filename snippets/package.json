@@ -1,0 +1,19 @@
+{
+  "name": "eployment-test-mainnet",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@kadena/chainweb-node-client": "^0.1.1"
+  },
+  "dependencies": {
+    "@kadena/client": "^0.1.5",
+    "pact-lang-api": "^4.3.6"
+  },
+  "main": "deploy-mainnet.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

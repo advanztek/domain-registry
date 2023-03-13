@@ -1,0 +1,61 @@
+;; begin-tx and commit-tx simulate a transaction
+(begin-tx "Load modules")
+
+;; set transaction JSON data
+(env-data {
+  ;; Here we set the required keysets.
+  ;; Note:
+  ;; - in a real transaction, `admin-key` would be a public key
+  ;; - "keys-all" is a built-in predicate that specifies all keys are needed to sign a tx,
+  ;;   in this case we only set one key
+  'domain-admin-gov-keyset: { "keys": ["k:36990b871267ec4532551e505260806d7f39378cebb5ea2c998c80301c5a100f"], "pred": "keys-all" },
+  'alice-keyset: { "keys": ["alice-key"], "pred": "keys-all" },
+  'bob-keyset: { "keys": ["bob-key"], "pred": "keys-all" },
+  'namespace-keyset: { "keys": [ ], "pred": "keys-all" },
+
+  ;; Upgrade key is set to false because we are deploying the modules
+  'upgrade: false
+})
+
+
+(define-namespace "free" (read-keyset "namespace-keyset") (read-keyset "namespace-keyset"))
+
+;; load fungible-v2 interface
+(load "root/fungible-v2.pact")
+
+;; load fungible-xchain-v1 interace
+(load "root/fungible-xchain-v1.pact")
+
+;; load coin module
+(load "root/coin-v5.pact")
+
+;; create coin module tables
+(create-table coin.coin-table)
+(create-table coin.allocation-table)
+
+;; load election module
+(load "name.pact")
+
+;; commit the transaction
+(commit-tx)
+
+(begin-tx "Create KDA accounts")
+
+;; create "alice" KDA account
+(coin.create-account "alice" (read-keyset "alice-keyset"))
+;; create "bob" KDA account
+(coin.create-account "bob" (read-keyset "bob-keyset"))
+(env-data {'k:["alice-key"]})
+(test-capability (coin.CREDIT "alice"))
+(coin.credit "alice" (read-keyset 'k) 10000.0) 
+
+(commit-tx)
+
+(begin-tx "Try buying a domain name")
+(use free.testingdomain)
+(env-sigs [{ "key": "alice-key", "caps": [(coin.TRANSFER "alice" "k:36990b871267ec4532551e505260806d7f39378cebb5ea2c998c80301c5a100f" 1.0), (free.testingdomain.ACCOUNT_GUARD "alice")]}])
+
+(register "alice" "k:2cf3e52a1e9e961257599a5155cc5ef3e836fc8f70b7edf867cfbf45a07d612d" "elijahd.kda" 365)
+(expect "Info details of domain name")
+
+(commit-tx)
